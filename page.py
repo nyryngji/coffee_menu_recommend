@@ -4,8 +4,7 @@ import streamlit as st
 from streamlit_modal import Modal
 from sklearn.metrics.pairwise import cosine_similarity
 from streamlit_option_menu import option_menu
-import toml
-from selenium import webdriver
+
 
 df = ['menu_starbucks.csv','menu_mega.csv','menu_gongcha.csv','menu_paik.csv','menu_compose.csv','menu_ediya.csv']
 images = ['starbucks_logo.png','mega_logo.png','gong_logo.jpg','paik_logo.png','compose_logo.jpeg','ediya_logo.png']
