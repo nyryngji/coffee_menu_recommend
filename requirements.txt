@@ -1,0 +1,6 @@
+numpy
+pandas
+streamlit
+streamlit_modal
+sklearn.metrics.pairwise
+streamlit_option_menu
