@@ -2,4 +2,5 @@ streamlit
 numpy
 pandas
 streamlit_modal
-sklearn
+scikit-learn
+streamlit_option_menu
