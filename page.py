@@ -5,7 +5,6 @@ from streamlit_modal import Modal
 from sklearn.metrics.pairwise import cosine_similarity
 from streamlit_option_menu import option_menu
 
-
 df = ['menu_starbucks.csv','menu_mega.csv','menu_gongcha.csv','menu_paik.csv','menu_compose.csv','menu_ediya.csv']
 images = ['starbucks_logo.png','mega_logo.png','gong_logo.jpg','paik_logo.png','compose_logo.jpeg','ediya_logo.png']
 brand = {'스타벅스':'#036635', '메가커피':'#f9cf00', '공차':'#C71F36',
@@ -22,47 +21,54 @@ with st.sidebar:
     image += images[list(brand.keys()).index(choice)]
     r += df[list(brand.keys()).index(choice)]
 
-    # with open('.streamlit/config.toml', 'w') as file:
-    #     toml.dump({'theme': {'base': 'light', 'primaryColor': brand[choice]}}, file)
-
 st.title("Menu Recommend System")
 st.image(image,width=80)
 st.write('Content-based Filtering')
+
+answers = []
+menu_info = pd.read_csv(r).drop_duplicates()
+
+kcal = st.selectbox("당신이 원하는 칼로리 범위는?",[
+'🍎🍎🍎 사과 3알 100kcal', '🥤 콜라 한 캔 200kcal', '🍚 밥 한 공기 300kcal', '🍕 피자 한 조각 400kcal',
+'🍰 케이크 한 조각 500kcal','🥩 삼겹살 2인분 600kcal'])
+sugar = st.selectbox("당도 조절",['🍯 거의 달지 않은 맛', '🍯🍯 조금 덜 단 맛','🍯🍯🍯 보통 단 맛','🍯🍯🍯🍯 매우 단 맛'])
+caffein = st.slider("카페인 조절",0,600,step=100)
+
 st.markdown(
     '''
     <style>
+    .st-emotion-cache-l9bjmx p {
+        font-size: 20px;
+        margin-bottom: 5px;
+        margin-top: 15px;
+    }
     .explain {
         color: #FF0000; 
+        margin : 10
     }
     </style>''',unsafe_allow_html=True)
 
 st.markdown('''
             <div class="explain">
-            <p>여러분이 원하는 칼로리, 당류, 카페인의 <b>최대치</b>를 입력해주세요!</p>
+            <p>성인의 하루 카페인 권장량은 200~400mg 입니다.</p>
             </div>''',unsafe_allow_html=True)
 
-answers = []
-menu_info = pd.read_csv(r).drop_duplicates()
-
-kcal = st.slider("칼로리",0,int(menu_info['칼로리(Kcal)'].max()),int(menu_info['칼로리(Kcal)'].mean()))
-sugar = st.slider("당분",0,int(menu_info['당류(g)'].max()),int(menu_info['당류(g)'].mean()))
-caffein = st.slider("카페인",0,int(menu_info['카페인(mg)'].max()),int(menu_info['카페인(mg)'].mean()))
-coffee = st.radio('커피를 포함하는지?',['Yes','No'])
-hotorice = st.radio('hot/ice',['HOT','ICE'])
-
+hotorice = st.radio('hot/ice',['HOT','ICE'],horizontal=True)
 submitted = st.button("SUBMIT")
 
-answers = [kcal,sugar,caffein,[1 if coffee == 'Yes' else 0][0],[0 if hotorice == 'HOT' else 1][0]]
+k = ['🍎🍎🍎 사과 3알 100kcal', '🥤 콜라 한 캔 200kcal', '🍚 밥 한 공기 300kcal', '🍕 피자 한 조각 400kcal',
+'🍰 케이크 한 조각 500kcal','🥩 삼겹살 2인분 600kcal'].index(kcal)+1
 
-if answers[3] == 0:
-    menu_info = menu_info[menu_info['커피 포함']==0]
+answers = [k*100,sugar.count('🍯')*20,caffein,[1 if hotorice=='ICE' else 0][0]]
 
 if answers[-1] == 0:
     menu_info = menu_info[menu_info['hot/ice'] == 0]
 else:
     menu_info = menu_info[menu_info['hot/ice'] == 1]
 
-menu_info2 = menu_info.drop(['메뉴','photo'],axis=1)
+menu_info = menu_info[(menu_info['칼로리(Kcal)'] <= k*100) & (menu_info['칼로리(Kcal)'] > (k-1)*100)]
+
+menu_info2 = menu_info.drop(['메뉴','photo','커피 포함'],axis=1)
 
 # 모달 닫기 버튼 누르면 입력한 정보 출력
 modal = Modal(key="menu_result",title='For Your Recommend')
@@ -76,6 +82,7 @@ st.markdown(
          font-weight: bold;
     }}
     </style>''',unsafe_allow_html=True)
+
 if submitted:
     with modal.container():
         menu_sim = cosine_similarity(np.array(answers).reshape(1,-1),menu_info2.values)
